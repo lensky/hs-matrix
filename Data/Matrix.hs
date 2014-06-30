@@ -1,10 +1,13 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE FlexibleContexts #-}
 
-module Matrix
+module Data.Matrix
        (Matrix(..)
        ,showAsMatrix
        ,putAsMatrix
-       ,ArrayRep(..))
+       ,ArrayRep(..)
+       ,MatrixRing(..))
  where
 
 import qualified Data.List as LST
@@ -23,6 +26,20 @@ class Matrix t s a where
   generateM :: (Monad m) => Int -> Int -> (Int -> Int -> m a) -> m (t s a)
 
   fromList :: [[a]] -> t s a
+  
+  toColList :: t s a -> [s a]
+  toColList m = map (col m) [0..cols m - 1]
+  
+  toRowList :: t s a -> [s a]
+  toRowList m = map (row m) [0..rows m - 1]
+
+class (Matrix m s a, Matrix m' s' a') => MatrixRing m s a m' s' a' where
+  type MSumMatrix m s a m' s' a' :: (* -> *) -> * -> *
+  type MSumElement m s a m' s' a' :: *
+  type MSumStore m s a m' s' a' :: * -> *
+
+  mp :: (Matrix (MSumMatrix m s a m' s' a') (MSumStore m s a m' s' a') (MSumElement m s a m' s' a')) => 
+        m s a -> m' s' a' -> (MSumMatrix m s a m' s' a') (MSumStore m s a m' s' a') (MSumElement m s a m' s' a') 
 
 -- | Utility function to produce a string representation of a matrix more
 -- suitable for human consumption. Mainly useful for debugging.

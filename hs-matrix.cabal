@@ -3,7 +3,7 @@
 
 name:                hs-matrix
 version:             0.1.0.0
-synopsis:            Matrix library with LAPACK interface for Haskell.
+synopsis:            Matrix library with LAPACK bindings for Haskell.
 -- description:         
 license:             MIT
 license-file:        LICENSE
@@ -16,10 +16,26 @@ build-type:          Simple
 cabal-version:       >=1.10
 
 library
-  exposed-modules:     ComplexUtils, DenseMatrix, HermitianMatrix, LAPACK, Matrix, Operator
-  -- other-modules:       
-  other-extensions:    GeneralizedNewtypeDeriving, FlexibleInstances, UndecidableInstances, MultiParamTypeClasses, OverlappingInstances, DeriveDataTypeable, FlexibleContexts, TypeFamilies
-  build-depends:       base >=4.7 && <4.8, vector >=0.10 && <0.11, primitive >=0.5 && <0.6
-  -- hs-source-dirs:      
+  exposed-modules:     Data.Matrix
+                       Data.Matrix.Dense
+                       Data.Matrix.Hermitian.Banded
+                       Data.Matrix.Hermitian.Dense
+                       LAPACK
+                       LAPACK.Utils
+                       Operator
+                       Data.Complex.Utils
+  other-modules:       Data.Matrix.Utils
+  other-extensions:    GeneralizedNewtypeDeriving
+                       MultiParamTypeClasses
+                       TypeFamilies
+                       FlexibleInstances
+                       UndecidableInstances
+                       OverlappingInstances
+                       DeriveDataTypeable
+                       FlexibleContexts
+  build-depends:       base >=4.7 && <4.8
+                       , vector >=0.10 && <0.11
+                       , primitive >=0.5 && <0.6
   default-language:    Haskell2010
   frameworks:          Accelerate
+  ghc-options:         -O2 -Wall

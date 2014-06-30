@@ -21,7 +21,7 @@ module LAPACK (
   , hszhbevx
   ) where
 
-import           ComplexUtils
+import           Data.Complex.Utils
 
 import           Foreign                      (Storable, alloca, with)
 import           Foreign.C.String             (castCharToCChar,withCAString)
