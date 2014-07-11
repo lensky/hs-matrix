@@ -124,7 +124,7 @@ instance (FComplexable a CDouble
   type EigenvalueStorage (DenseHMatrix v a) = UV.Vector
   type EigenvectorStorage (DenseHMatrix v a) = DenseMatrix UV.Vector (Complex Double)
 
-  eigvals m (Just (lo,hi)) = GV.unsafeSlice 0 (hi - lo + 1) . fst $
+  eigvals m (Just (lo,hi)) = GV.unsafeTake (hi - lo + 1) . fst $
                              (fullEigensystem m False rngEigNums 0 0 lo hi
                                :: (UV.Vector Double, Maybe (UV.Vector (Complex Double))))
   eigvals m Nothing = fst
@@ -132,12 +132,14 @@ instance (FComplexable a CDouble
                         :: (UV.Vector Double, Maybe (UV.Vector (Complex Double))))
 
   eigvecs m (Just (lo,hi)) =
-    DenseMatrix { dmRows = dhmOrder m
-                , dmCols = hi - lo + 1
+    DenseMatrix { dmRows = rs
+                , dmCols = cs
                 , dmRep = ColMajor
-                , dmData = fromMaybe GV.empty . snd $ 
+                , dmData = maybe GV.empty (GV.unsafeTake (rs*cs)) . snd $
                            (fullEigensystem m True rngEigNums 0 0 lo hi
                              :: (UV.Vector Double, Maybe (UV.Vector (Complex Double)))) }
+    where rs = dhmOrder m
+          cs = hi - lo + 1
   eigvecs m Nothing =
     DenseMatrix { dmRows = dhmOrder m
                 , dmCols = dhmOrder m

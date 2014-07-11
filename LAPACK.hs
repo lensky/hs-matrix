@@ -193,7 +193,7 @@ hszhbevx jz rng ul mo sd pab ldab vl vu il iu tol =
     with (realToFrac tol) $ \ptol -> do
       w <- SVM.new mo
       z <- if jz == jzEigvalsEigvecs
-           then fmap Just (SVM.new (mo * mo))
+           then fmap Just (SVM.new (mo * nevals))
            else return Nothing
       SVM.unsafeWith w $ \pw ->
           (\f -> maybe (f nullPtr) (`SVM.unsafeWith` f) z) $ \pz ->
@@ -228,6 +228,9 @@ hszhbevx jz rng ul mo sd pab ldab vl vu il iu tol =
                          pifail
                          pinfo
                 return (w, z)
+    where nevals = if rng == rngEigNums
+                      then iu - il + 1
+                      else mo
 
 foreign import ccall safe "zheevr_" f_zheevr
   :: Ptr JOBZ
@@ -284,7 +287,8 @@ hszheevr jz rng ul mo pmat ldm vl vu il iu tol =
   condWith (rng == rngEigNums) (fromIntegral iu) $ \piu ->
   with (realToFrac tol) $ \ptol ->
   alloca $ \pm ->
-  allocaArray (2 * mo) $ \pisupz ->
+  condAllocaArray (rng == rngAll || (rng == rngEigNums && iu - il == mo - 1)) 
+                  (2 * nevals) $ \pisupz ->
   allocaArray lwork $ \pwork ->
   with (fromIntegral lwork) $ \plwork ->
   allocaArray lrwork $ \prwork ->
@@ -294,7 +298,7 @@ hszheevr jz rng ul mo pmat ldm vl vu il iu tol =
   alloca $ \pinfo -> do
     w <- SVM.new mo
     z <- if jz == jzEigvalsEigvecs
-            then fmap Just (SVM.new ldz)
+            then fmap Just (SVM.new (mo * nevals))
             else return Nothing
     SVM.unsafeWith w $ \pw ->
       (\f -> maybe (f nullPtr) (`SVM.unsafeWith` f) z) $ \pz -> do
@@ -325,4 +329,6 @@ hszheevr jz rng ul mo pmat ldm vl vu il iu tol =
   where lwork = (zheevrBS + 1) * mo
         lrwork = 24 * mo
         liwork = 10 * mo
-        ldz = mo * mo
+        nevals = if rng == rngEigNums
+                    then iu - il + 1
+                    else mo 

@@ -184,25 +184,27 @@ instance (FComplexable a CDouble
   type EigenvalueStorage (BandedHMatrix v a) = UV.Vector
   type EigenvectorStorage (BandedHMatrix v a) = DenseMatrix UV.Vector (Complex Double)
 
-  eigvals m (Just (lo,hi)) = GV.unsafeSlice 0 (hi - lo + 1) . fst $ 
+  eigvals m (Just (lo,hi)) = GV.unsafeTake (hi - lo + 1) . fst $ 
                              (fullEigensystem m False rngEigNums 0 0 lo hi 
                                :: (UV.Vector Double, Maybe (UV.Vector (Complex Double))))
-  eigvals m Nothing = fst 
+  eigvals m Nothing = fst
     (fullEigensystem m False rngAll 0 0 0 0 
     :: (UV.Vector Double, Maybe (UV.Vector (Complex Double))))
 
   eigvecs m (Just (lo,hi)) =
-    DenseMatrix { dmRows = bhmOrder m
-                , dmCols = hi - lo + 1
+    DenseMatrix { dmRows = rs
+                , dmCols = cs
                 , dmRep = ColMajor
-                , dmData = fromMaybe GV.empty . snd $ 
-                  (fullEigensystem m True rngEigNums 0 0 lo hi
+                , dmData = maybe GV.empty (GV.unsafeTake (rs * cs)) $ 
+                  snd (fullEigensystem m True rngEigNums 0 0 lo hi
                   :: (UV.Vector Double, Maybe (UV.Vector (Complex Double)))) }
+    where rs = bhmOrder m
+          cs = hi - lo + 1
   eigvecs m Nothing =
     DenseMatrix { dmRows = bhmOrder m
                 , dmCols = bhmOrder m
                 , dmRep = ColMajor
-                , dmData = fromMaybe GV.empty . snd $ 
+                , dmData = fromMaybe GV.empty . snd $
                   (fullEigensystem m True rngAll 0 0 0 0
                   :: (UV.Vector Double, Maybe (UV.Vector (Complex Double)))) }
 
