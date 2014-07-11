@@ -126,7 +126,7 @@ condAllocaArray :: Storable a => Bool -> Int -> (Ptr a -> IO b) -> IO b
 condAllocaArray False _ f = f nullPtr
 condAllocaArray True d f = allocaArray d f
 
-foreign import ccall unsafe "zhbevx_" f_zhbevx
+foreign import ccall safe "zhbevx_" f_zhbevx
         :: Ptr JOBZ -- JOBZ
         -> Ptr RANGE -- RANGE
         -> Ptr UPLO -- UPLO
@@ -229,7 +229,7 @@ hszhbevx jz rng ul mo sd pab ldab vl vu il iu tol =
                          pinfo
                 return (w, z)
 
-foreign import ccall unsafe "zheevr_" f_zheevr
+foreign import ccall safe "zheevr_" f_zheevr
   :: Ptr JOBZ
   -> Ptr RANGE
   -> Ptr UPLO -- ^ whether to use upper/lower triangle of matrix
