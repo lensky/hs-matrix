@@ -33,6 +33,7 @@ import qualified Data.Vector.Storable as SV
 import qualified Data.Vector.Storable.Mutable as SVM
 import qualified Data.Vector.Unboxed as UV
 
+-- | Datatype for a dense hermitian matrix, with data stored in column-major order.
 data DenseHMatrix s a
   = DenseHMatrix
     { dhmOrder :: Int
@@ -92,6 +93,7 @@ instance (Conjugable a, GV.Vector v a) => MatrixRing DenseHMatrix v a DenseHMatr
         , dhmData = GV.zipWith (+) d d'
         }
 
+-- | Wrapper to "raw" Haskell function 'hszheevr' for the eigensystem of a Hermitian matrix.
 fullEigensystem :: (FComplexable a CDouble 
                    , GV.Vector v a
                    , GV.Vector v (FComplex CDouble)

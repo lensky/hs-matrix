@@ -100,7 +100,8 @@ instance (Conjugable a, GV.Vector v a) => Matrix BandedHMatrix v a where
                     , bhmData = d }
     where rc i = let (c,r) = quotRem i (sd + 1)
                  in (c - sd + r, c)
-                 
+
+-- | Change the in-memory vector representation for a 'BandedHMatrix'.                 
 vecChangeRep :: (Conjugable a, GV.Vector v a) => BandedHMatrix v a -> BandedHMatrix v a
 vecChangeRep m@(BHMatrix mo sd rep d)
   = m { bhmRep = newRep, bhmData = d' }
@@ -144,8 +145,8 @@ instance (Conjugable a, GV.Vector v a, GV.Vector v Int) =>
                           else mp m' m
     | otherwise = mp m (vecChangeRep m')
 
--- | Wrapper to "raw" haskell function that calculates a full eigensystem for
--- banded hermitian matrices.
+-- | Wrapper to "raw" Haskell function 'hszhbevx' for the eigensystem of a
+-- banded Hermitian matrix.
 fullEigensystem :: (FComplexable a CDouble 
                    , GV.Vector v a
                    , GV.Vector v (FComplex CDouble)

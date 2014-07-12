@@ -30,12 +30,17 @@ class Matrix t s a where
   row :: t s a -> Int -> s a
   col :: t s a -> Int -> s a
 
+  -- | Row-column indexing.
   ij :: t s a -> Int -> Int -> a
   transpose :: t s a -> t s a
 
+  -- | Generate a matrix from a function that takes a row and column as input.
   generate :: Int -> Int -> (Int -> Int -> a) -> t s a
+  -- | Generate a matrix from a monadic function that takes a row and column as input.
   generateM :: (Monad m) => Int -> Int -> (Int -> Int -> m a) -> m (t s a)
 
+  -- | Generate the matrix from a list. Generally not the most efficient way
+  -- to create a matrix, and mostly useful for testing.
   fromList :: [[a]] -> t s a
   
   toColList :: t s a -> [s a]
@@ -44,11 +49,16 @@ class Matrix t s a where
   toRowList :: t s a -> [s a]
   toRowList m = map (row m) [0..rows m - 1]
 
+-- | Class to implement matrix addition.
 class (Matrix m s a, Matrix m' s' a') => MatrixRing m s a m' s' a' where
+  -- | Type for the result of addition. This is important, for example, when
+  -- adding banded to sparse matrices, when the result is not necessarily of
+  -- either type.
   type MSumMatrix m s a m' s' a' :: (* -> *) -> * -> *
   type MSumElement m s a m' s' a' :: *
   type MSumStore m s a m' s' a' :: * -> *
 
+  -- | Matrix element-wise addition.
   mp :: (Matrix (MSumMatrix m s a m' s' a') (MSumStore m s a m' s' a') (MSumElement m s a m' s' a')) => 
         m s a -> m' s' a' -> (MSumMatrix m s a m' s' a') (MSumStore m s a m' s' a') (MSumElement m s a m' s' a') 
 

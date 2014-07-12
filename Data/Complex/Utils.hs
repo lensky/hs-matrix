@@ -30,7 +30,7 @@ import qualified Data.Vector.Generic as GV
 import qualified Data.Vector.Generic.Mutable as MV
 import qualified Data.Vector.Unboxed as UV
 
--- | Wrapping of 'Data.Complex' 'Complex' type for explicit memory structure
+-- | Wrapping of 'Data.Complex.Complex' type for explicit memory structure
 -- for Fortran FFI compatibility.
 --
 -- The explicit structure is the simplest; two memory-adjacent storable
@@ -50,7 +50,7 @@ instance (RealFloat a, Storable a) => Storable (FComplex a) where
       let q = castPtr p
       poke q r
       pokeElemOff q 1 c
-      
+
 newtype instance UV.MVector s (FComplex a) = MV_FComplex (UV.MVector s (Complex a))
 newtype instance UV.Vector (FComplex a) = V_FComplex (UV.Vector (Complex a))
 
@@ -102,6 +102,7 @@ instance (RealFloat a, UV.Unbox a) => UV.Unbox (FComplex a)
 -- | Default double-precision complex type used in Fortran (complex*16 or double complex).
 type FDComplex = FComplex CDouble
 
+-- | Convert from a 'FComplex' value to a Haskell complex number.
 fromFComplex :: FComplex b -> Complex b
 fromFComplex (FComplex c) = c
 
@@ -131,5 +132,7 @@ instance (RealFloat a) => Conjugable (Complex a) where
 instance (RealFloat a) => Conjugable (FComplex a) where
   cconj (FComplex c) = FComplex $ conjugate c
 
+-- | Utility function to take complex numbers to arbitrary numeric types in
+-- the components.
 complexToFrac :: (Real a, Fractional b) => Complex a -> Complex b
 complexToFrac (r :+ c) = realToFrac r :+ realToFrac c

@@ -26,12 +26,14 @@ import qualified Data.Vector.Generic.Mutable as MV
 import qualified Data.Vector.Unboxed as UV
 import qualified Data.Vector.Storable as SV
 
+-- | Freeze and convert a storable, mutable vector.
 freezeConvert :: (PrimMonad m, Functor m, Storable a, GV.Vector v b, GV.Vector v a)
               => (a -> b) 
               -> GV.Mutable SV.Vector (PrimState m) a 
               -> m (v b)
 freezeConvert f mvals = (GV.map f . GV.convert) <$> SV.unsafeFreeze mvals
 
+-- | Freeze a Hermitian eigensystem as returned by typical LAPACK calls.
 freezeHermitianES :: (Real a, Storable a, RealFloat a', Storable a'
                      ,Fractional b, Fractional b'
                      ,PrimMonad m, Functor m

@@ -152,7 +152,7 @@ foreign import ccall safe "zhbevx_" f_zhbevx
         -> Ptr CInt -- INFO
         -> IO ()
 
--- | Haskell wrapper for FORTRAN ZHBEVX function to find eigenvalues and
+-- | Haskell wrapper for LAPACK ZHBEVX function to find eigenvalues and
 -- eigenvectors of Hermitian band matrices.
 hszhbevx :: JOBZ -- ^ the "type" of job, one of:
                  -- * 'jzEigvals' for eigenvalues
@@ -258,6 +258,8 @@ foreign import ccall safe "zheevr_" f_zheevr
   -> Ptr CInt -- ^ INFO
   -> IO ()
 
+-- | Haskell wrapper for LAPACK ZHEEVR function to find eigenvalues and
+-- eigenvectors of Hermitian matrices.
 hszheevr :: JOBZ -- ^ the "type" of job
          -> RANGE -- ^ the "type" of range specification
          -> UPLO -- ^ the portion of the input matrix to use

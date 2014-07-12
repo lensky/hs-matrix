@@ -14,6 +14,7 @@ import qualified Data.Permutation as P
 
 import qualified Data.Vector.Generic as GV
 
+-- | Synonym for a matrix-like multivector.
 type DenseMatrix v a = MatrixLike v a
 
 -- | Create a dense matrix from column-major raw vector data.
