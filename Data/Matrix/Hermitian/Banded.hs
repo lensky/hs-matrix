@@ -15,7 +15,7 @@ where
 
 import Data.Matrix
 import Data.Matrix.Utils
-import Data.Matrix.Dense (DenseMatrix(..))
+import Data.Matrix.Dense (DenseMatrix,fromColMajorVector)
 import LAPACK
 import LAPACK.Utils
 import Data.Complex
@@ -191,22 +191,17 @@ instance (FComplexable a CDouble
     (fullEigensystem m False rngAll 0 0 0 0 
     :: (UV.Vector Double, Maybe (UV.Vector (Complex Double))))
 
-  eigvecs m (Just (lo,hi)) =
-    DenseMatrix { dmRows = rs
-                , dmCols = cs
-                , dmRep = ColMajor
-                , dmData = maybe GV.empty (GV.unsafeTake (rs * cs)) $ 
-                  snd (fullEigensystem m True rngEigNums 0 0 lo hi
-                  :: (UV.Vector Double, Maybe (UV.Vector (Complex Double)))) }
+  eigvecs m (Just (lo,hi)) = fromColMajorVector rs cs . 
+                             maybe GV.empty (GV.unsafeTake (rs * cs)) $ 
+                             snd (fullEigensystem m True rngEigNums 0 0 lo hi 
+                               :: (UV.Vector Double, Maybe (UV.Vector (Complex Double))))
     where rs = bhmOrder m
           cs = hi - lo + 1
-  eigvecs m Nothing =
-    DenseMatrix { dmRows = bhmOrder m
-                , dmCols = bhmOrder m
-                , dmRep = ColMajor
-                , dmData = fromMaybe GV.empty . snd $
-                  (fullEigensystem m True rngAll 0 0 0 0
-                  :: (UV.Vector Double, Maybe (UV.Vector (Complex Double)))) }
+          
+  eigvecs m Nothing = fromColMajorVector (bhmOrder m) (bhmOrder m) . 
+                      fromMaybe GV.empty . snd $
+                      (fullEigensystem m True rngAll 0 0 0 0
+                        :: (UV.Vector Double, Maybe (UV.Vector (Complex Double))))
 
   adjoint = id
 

@@ -1,17 +1,28 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 module Data.Matrix
-       (Matrix(..)
+       (
+       -- * Matrix classes
+       Matrix(..)
+       ,MatrixRing(..)
+       -- * Utility methods
        ,showAsMatrix
-       ,putAsMatrix
-       ,ArrayRep(..)
-       ,MatrixRing(..))
- where
+       ,putAsMatrix)
+where
+
+import Data.Tensor hiding (generate,generateM)
+import qualified Data.Tensor as T
+import Data.Tensor.MultiVector (MultiVector(..), cacheCoeffs, deepReIndex)
+import qualified Data.Permutation as P
 
 import qualified Data.List as LST
 
+import qualified Data.Vector.Generic as GV
+
+-- | Class for an object that can be seen as a matrix.
 class Matrix t s a where
   rows :: t s a -> Int
   cols :: t s a -> Int
@@ -54,4 +65,32 @@ showAsMatrix m = LST.intercalate "\n" . map showRow $ [0..(rs - 1)]
 putAsMatrix :: (Show a, Matrix t s a) => t s a -> IO ()
 putAsMatrix = putStrLn . showAsMatrix
 
-data ArrayRep = RowMajor | ColMajor deriving (Eq, Show)
+instance (GV.Vector v a, GV.Vector v Int) => Matrix (MultiVector MatrixTS) v a where 
+  rows = fst . mtsAsPair . shape
+  cols = snd . mtsAsPair . shape
+
+  row mv r = mvData (mv ?? pairAsMSlice (Single r, All))
+  col mv c = mvData (mv ?? pairAsMSlice (All, Single c))
+
+  ij mv r c = mv ? listAsSel [r,c]
+
+  transpose = reIndex (P.fromList [1,0])
+
+  generate rs cs f = T.generate (pairAsMts (rs,cs)) (uncurry f . mSelAsPair)
+
+  generateM rs cs f = T.generateM (pairAsMts (rs,cs)) (uncurry f . mSelAsPair)
+
+  fromList l = cacheCoeffs MultiVector { mvShape = pairAsMts (rs,cs)
+                                       , mvLinearStorageOrder = P.identity 2
+                                       , mvData = GV.fromList $ LST.concat l}
+    where rs = length l
+          cs = length $ head l
+
+instance (Num a, GV.Vector v a, GV.Vector v Int) => 
+  MatrixRing (MultiVector MatrixTS) v a (MultiVector MatrixTS) v a where 
+  type MSumMatrix (MultiVector MatrixTS) v a (MultiVector MatrixTS) v a = (MultiVector MatrixTS)
+  type MSumElement (MultiVector MatrixTS) v a (MultiVector MatrixTS) v a = a
+  type MSumStore (MultiVector MatrixTS) v a (MultiVector MatrixTS) v a = v
+  mp m m' | mvLinearStorageOrder m == mvLinearStorageOrder m' = 
+            m { mvData = GV.zipWith (+) (mvData m) (mvData m')}
+          | otherwise = mp m (deepReIndex (P.fromList [1,0]) m')

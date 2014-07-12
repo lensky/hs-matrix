@@ -130,22 +130,17 @@ instance (FComplexable a CDouble
   eigvals m Nothing = fst
                       (fullEigensystem m False rngAll 0 0 0 0
                         :: (UV.Vector Double, Maybe (UV.Vector (Complex Double))))
-
-  eigvecs m (Just (lo,hi)) =
-    DenseMatrix { dmRows = rs
-                , dmCols = cs
-                , dmRep = ColMajor
-                , dmData = maybe GV.empty (GV.unsafeTake (rs*cs)) . snd $
-                           (fullEigensystem m True rngEigNums 0 0 lo hi
-                             :: (UV.Vector Double, Maybe (UV.Vector (Complex Double)))) }
+                             
+  eigvecs m (Just (lo,hi)) = fromColMajorVector rs cs . 
+                             maybe GV.empty (GV.unsafeTake (rs * cs)) $ 
+                             snd (fullEigensystem m True rngEigNums 0 0 lo hi 
+                               :: (UV.Vector Double, Maybe (UV.Vector (Complex Double))))
     where rs = dhmOrder m
           cs = hi - lo + 1
-  eigvecs m Nothing =
-    DenseMatrix { dmRows = dhmOrder m
-                , dmCols = dhmOrder m
-                , dmRep = ColMajor
-                , dmData = fromMaybe GV.empty . snd $ 
-                           (fullEigensystem m True rngAll 0 0 0 0
-                             :: (UV.Vector Double, Maybe (UV.Vector (Complex Double)))) }
+          
+  eigvecs m Nothing = fromColMajorVector (dhmOrder m) (dhmOrder m) . 
+                      fromMaybe GV.empty . snd $
+                      (fullEigensystem m True rngAll 0 0 0 0
+                        :: (UV.Vector Double, Maybe (UV.Vector (Complex Double))))
 
   adjoint = id

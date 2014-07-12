@@ -36,6 +36,7 @@ library
   build-depends:       base >=4.7 && <4.8
                        , vector >=0.10 && <0.11
                        , primitive >=0.5 && <0.6
+                       , hs-tensor
   default-language:    Haskell2010
   frameworks:          Accelerate
   ghc-options:         -O2 -Wall
