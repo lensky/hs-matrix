@@ -13,12 +13,15 @@ module Data.Matrix
        ,putAsMatrix)
 where
 
-import Data.Tensor hiding (generate,generateM)
-import qualified Data.Tensor as T
-import Data.Tensor.MultiVector (MultiVector(..), cacheCoeffs, deepReIndex)
-import qualified Data.Permutation as P
 
 import qualified Data.List as LST
+import qualified Data.Permutation as P
+
+import qualified Data.Tensor as T
+import Data.Tensor hiding (generate,generateM)
+import Data.Tensor.Dense.VTensor (MD_VTensor, VTensor(..))
+
+import qualified Data.Tensor.Dense.VTensor as VT
 
 import qualified Data.Vector.Generic as GV
 
@@ -75,32 +78,36 @@ showAsMatrix m = LST.intercalate "\n" . map showRow $ [0..(rs - 1)]
 putAsMatrix :: (Show a, Matrix t s a) => t s a -> IO ()
 putAsMatrix = putStrLn . showAsMatrix
 
-instance (GV.Vector v a, GV.Vector v Int) => Matrix (MultiVector MatrixTS) v a where 
-  rows = fst . mtsAsPair . shape
-  cols = snd . mtsAsPair . shape
+instance (GV.Vector v a, GV.Vector v Int
+          ,LinearStorageInfo li (Int,Int) (Int,Int)
+          ,P.Permutable (li (Int,Int) (Int,Int)))
+         => Matrix (MD_VTensor li) v a where 
+  rows = fst . shape
+  cols = snd . shape
 
-  row mv r = mvData (mv ?? pairAsMSlice (Single r, All))
-  col mv c = mvData (mv ?? pairAsMSlice (All, Single c))
+  row mv r = _vData (mv *? [Inx r, All])
+  col mv c = _vData (mv *? [All, Inx c])
 
-  ij mv r c = mv ? listAsSel [r,c]
+  ij mv r c = mv *! (r,c)
 
   transpose = reIndex (P.fromList [1,0])
 
-  generate rs cs f = T.generate (pairAsMts (rs,cs)) (uncurry f . mSelAsPair)
+  generate rs cs f = T.generate (rs,cs) (uncurry f)
 
-  generateM rs cs f = T.generateM (pairAsMts (rs,cs)) (uncurry f . mSelAsPair)
+  generateM rs cs f = T.generateM (rs,cs) (uncurry f)
 
-  fromList l = cacheCoeffs MultiVector { mvShape = pairAsMts (rs,cs)
-                                       , mvLinearStorageOrder = P.identity 2
-                                       , mvData = GV.fromList $ LST.concat l}
+  fromList l = VTensor { _vStorageScheme = lss
+                       , _vData = GV.fromList $ LST.concat l }
     where rs = length l
           cs = length $ head l
+          lss = fromShapeOrder (rs,cs) (P.identity 2)
 
-instance (Num a, GV.Vector v a, GV.Vector v Int) => 
-  MatrixRing (MultiVector MatrixTS) v a (MultiVector MatrixTS) v a where 
-  type MSumMatrix (MultiVector MatrixTS) v a (MultiVector MatrixTS) v a = (MultiVector MatrixTS)
-  type MSumElement (MultiVector MatrixTS) v a (MultiVector MatrixTS) v a = a
-  type MSumStore (MultiVector MatrixTS) v a (MultiVector MatrixTS) v a = v
-  mp m m' | mvLinearStorageOrder m == mvLinearStorageOrder m' = 
-            m { mvData = GV.zipWith (+) (mvData m) (mvData m')}
-          | otherwise = mp m (deepReIndex (P.fromList [1,0]) m')
+instance (Num a
+         ,LinearStorageInfo li (Int,Int) (Int,Int)
+         ,P.Permutable (li (Int, Int) (Int,Int))
+         ,GV.Vector v a, GV.Vector v Int) 
+         => MatrixRing (MD_VTensor li) v a (MD_VTensor li) v a where 
+  type MSumMatrix (MD_VTensor li) v a (MD_VTensor li) v a = (MD_VTensor li)
+  type MSumElement (MD_VTensor li) v a (MD_VTensor li) v a = a
+  type MSumStore (MD_VTensor li) v a (MD_VTensor li) v a = v
+  mp = VT.zipWith (+)
